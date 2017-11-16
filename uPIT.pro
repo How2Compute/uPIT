@@ -28,13 +28,15 @@ SOURCES += \
         mainwindow.cpp \
     unrealplugin.cpp \
     unrealinstall.cpp \
-    pluginsource.cpp
+    pluginsource.cpp \
+    pluginselectionbutton.cpp
 
 HEADERS += \
         mainwindow.h \
     unrealplugin.h \
     unrealinstall.h \
-    pluginsource.h
+    pluginsource.h \
+    pluginselectionbutton.h
 
 FORMS += \
         mainwindow.ui
