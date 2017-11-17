@@ -539,7 +539,7 @@ void MainWindow::on_InstallPluginButton_clicked()
 #endif
 
     // Tell the user we're done, and be sure to update the plugin so it's added to the engine & set to installed (so the user can only press the remove button on the plugin).
-    // TODO - Call a function that will clear & recreate the installed plugins list.
+    RefreshPlugins(SelectedUnrealInstallation);
 
     // Mark this plugin as installed, and then reset it so the installed button will be greyed out & the uninstall will be active.
     selectedPlugin.SetInstalled(true);
