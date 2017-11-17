@@ -15,7 +15,8 @@ public:
 
 signals:
 
-private slots:
+//private slots:
+public Q_SLOTS:
     void onPluginSelected(bool checked);
 
 private:

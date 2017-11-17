@@ -17,14 +17,14 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
+    void SetPlugin(UnrealPlugin Plugin);
+
 private slots:
     void on_EngineVersionSelector_currentIndexChanged(const QString &arg1);
 
     void on_EngineVersionSelector_currentIndexChanged(int index);
 
 private:
-    void SetPlugin(UnrealPlugin Plugin);
-
     QList<UnrealInstall> GetEngineInstalls();
 
 private:

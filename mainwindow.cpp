@@ -10,6 +10,7 @@
 #include <QList>
 #include <QComboBox>
 #include "ui_mainwindow.h"
+#include "pluginselectionbutton.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -242,7 +243,6 @@ void MainWindow::on_EngineVersionSelector_currentIndexChanged(int index)
     for (UnrealPlugin Plugin : InstalledPlugins)
     {
         // TODO Make the horizontal box scrollable and make the layout neater (eg. not spaced out over the entire thing, but close to eachother vertically)
-
-        ui->PluginList->addWidget(new QPushButton(Plugin.GetName()));
+        ui->PluginList->addWidget(new PluginSelectionButton(Plugin, this));
     }
 }
