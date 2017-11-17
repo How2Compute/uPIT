@@ -9,12 +9,13 @@ PluginSelectionButton::PluginSelectionButton(QWidget *parent) : QWidget(parent)
 
 PluginSelectionButton::PluginSelectionButton(UnrealPlugin Plugin, MainWindow *window)
 {
-     button = new QPushButton(Plugin.GetName(), this);
-     QObject::connect(button, SIGNAL(clicked(bool)), this, SLOT(onPluginSelected(bool)));
-     // TODO it seems this class is successfully created, and the button is too, but the slot won't be found (QObject::connect: No such slot PluginSelectionButton::onPluginSelected() in ..\uPIT\pluginselectionbutton.cpp:13)
-     //QObject::connect(button, SIGNAL(clicked(bool)), this, &PluginSelectionButton::onPluginSelected);
-     this->Plugin = Plugin;
-     mWindow = window;
+    // Create a new push button as a sort of child and bind it to call the onPluginSelected function when clicked.
+    button = new QPushButton(Plugin.GetName(), this);
+    QObject::connect(button, SIGNAL(clicked(bool)), this, SLOT(onPluginSelected(bool)));
+
+    // Set the class's values based upon the parameters so we can later reference these
+    this->Plugin = Plugin;
+    mWindow = window;
 }
 
 void PluginSelectionButton::onPluginSelected(bool checked)
@@ -22,5 +23,14 @@ void PluginSelectionButton::onPluginSelected(bool checked)
 #ifdef QT_DEBUG
     qDebug() << "Plugin Button Pressed For Plugin With Friendly Name: " << Plugin.GetName();
 #endif
-    mWindow->SetPlugin(Plugin);
+    if (mWindow)
+    {
+        mWindow->SetPlugin(Plugin);
+    }
+#ifdef QT_DEBUG
+    else
+    {
+        qDebug() << "Invalid Window Pointer onPluginSelected For Plugin " << Plugin.GetName();
+    }
+#endif
 }

@@ -1,22 +1,5 @@
 #include "unrealplugin.h"
 
-/*
-UnrealPlugin::UnrealPlugin(QObject *parent) : QObject(parent)
-{
-
-}
-
-
-UnrealPlugin::UnrealPlugin(QString Name, QString Path, QString Description, QString EngineVersion, bool Installed)
-{
-    PluginName = Name;
-    PluginPath = Path;
-    PluginDescription = Description;
-    UnrealEngineVersion = EngineVersion;
-    bInstalled = Installed;
-}
-*/
-
 UnrealPlugin::UnrealPlugin(QString Name, QString Path, QString Description, QString EngineVersion, PluginSource Source, bool Installed)
 {
     PluginName = Name;

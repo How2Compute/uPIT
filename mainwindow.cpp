@@ -29,9 +29,6 @@ MainWindow::MainWindow(QWidget *parent) :
     int i = 0;
     for (UnrealInstall EngineInstall : UnrealInstallations)
     {
-        //QVariant((void*)&EngineInstall)
-        //qVariantFromValue((void*)&EngineInstall);
-        //ui->EngineVersionSelector->addItem(EngineInstall.GetName(), qVariantFromValue((void*)new UnrealInstall(EngineInstall)));
         ui->EngineVersionSelector->addItem(EngineInstall.GetName(), QVariant(i));
 
         i++;
@@ -81,8 +78,6 @@ QList<UnrealInstall> MainWindow::GetEngineInstalls()
     QList<UnrealInstall> UnrealInstalls;
 
 #ifdef Q_OS_WIN
-    //QStandardPaths::DataLocation
-    // QStandardPaths::GenericDataLocation
 
     QStringList paths = QStandardPaths::standardLocations(QStandardPaths::GenericDataLocation);
     QString ProgramDataPath;
@@ -136,8 +131,7 @@ QList<UnrealInstall> MainWindow::GetEngineInstalls()
 #endif
         }
 
-
-// TODO these appear to only be launcher versions!
+        // TODO these appear to only be launcher versions!
         QJsonObject EngineInstall = EngineInstallVal.toObject();
 
         QString EngineLocation = EngineInstall["InstallLocation"].toString();
@@ -173,6 +167,7 @@ void MainWindow::on_EngineVersionSelector_currentIndexChanged(int index)
 #endif
 
     QDir MarketplaceDir(UnrealInstallation.GetPath() + "/Engine/Plugins/Marketplace");
+
     // Where we will install plugins to by default
     QDir CustomDir(UnrealInstallation.GetPath() + "/Engine/Plugins/uPIT");
 
@@ -526,19 +521,6 @@ void MainWindow::on_InstallPluginButton_clicked()
 #ifdef QT_DEBUG
         qDebug() << "Finished Copying Files.";
 #endif
-
-
-/*
-    for (QFileInfo File : Files)
-    {
-#ifdef QT_DEBUG
-
-        qDebug() << File.filePath() << " -> " << DestinationDirectory + File.filePath().remove(PluginBasePath);
-#endif
-        //QFile(File).copy()
-        //File.co
-    }
-*/
 
     // Tell the user we're done, and be sure to update the plugin so it's added to the engine & set to installed (so the user can only press the remove button on the plugin).
     // TODO - Call a function that will clear & recreate the installed plugins list.

@@ -7,8 +7,6 @@
 class UnrealPlugin// : public QObject
 {
 public:
-    //explicit UnrealPlugin(QObject *parent = nullptr);
-
     UnrealPlugin();
     UnrealPlugin(QString Name, QString Path, QString Description, QString EngineVersion, PluginSource Source, bool Installed);
 
