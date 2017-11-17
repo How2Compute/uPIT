@@ -246,3 +246,12 @@ void MainWindow::on_EngineVersionSelector_currentIndexChanged(int index)
         ui->PluginList->addWidget(new PluginSelectionButton(Plugin, this));
     }
 }
+
+void MainWindow::on_OpenPluginButton_clicked()
+{
+    // Allow the user to browse to where the uplugin file is located
+
+    // Parse the UPlugin file & create an UnrealPlugin based on this (TODO abstract this functionality for reusability)
+
+    // Set the newly opened plugin so the user can install it.
+}

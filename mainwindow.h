@@ -24,6 +24,10 @@ private slots:
 
     void on_EngineVersionSelector_currentIndexChanged(int index);
 
+    // Called when the user wants to open a non-installed plugin.
+    /// Should ask the user to browse to it, create a UnrealPlugin based on this, and then set it using SetPlugin();
+    void on_OpenPluginButton_clicked();
+
 private:
     QList<UnrealInstall> GetEngineInstalls();
 
