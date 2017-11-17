@@ -12,6 +12,7 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QProcess>
+#include <QInputDialog>
 #include "ui_mainwindow.h"
 #include "pluginselectionbutton.h"
 
@@ -628,4 +629,57 @@ void MainWindow::on_RemovePluginButton_clicked()
     SuccessPrompt.setWindowTitle("Done!");
     SuccessPrompt.setText("Successfully Uninstalled " + PluginName + " from " + SelectedUnrealInstallation.GetName() + "!");
     SuccessPrompt.exec();
+}
+
+void MainWindow::on_actionAdd_Unreal_Engine_Install_triggered()
+{
+    // NOTE: Assume users will go into the root (eg .../UE_4.17/ and not .../UE_4.17/Engine/ or something like that)
+
+    QString InstallDirectory = QFileDialog::getExistingDirectory(this, "Open The Engine Install", "");
+
+#ifdef QT_DEBUG
+    qDebug() << "User Selected Installation Directory: " << InstallDirectory;
+#endif
+
+    if (InstallDirectory.isEmpty())
+    {
+        // The install directory was blank, meaning that the user (probably) canceled the dialog. Don't continue on, but don't show an error either.
+        return;
+    }
+    else if (!QDir(InstallDirectory).exists())
+    {
+#ifdef QT_DEBUG
+        qDebug() << "Selected Install Directory Does Not Exist!";
+#endif
+        // This literally shouldn't ever happen, so just drop the request.
+        return;
+    }
+
+    bool bGotName;
+    QString EngineName = QInputDialog::getText(this, "Add Custom UE4 Installation", "Please Give This Installation A (Descriptive) Name.", QLineEdit::Normal, "CUSTOM_UNREAL_INSTALL", &bGotName);
+
+    if (!bGotName)
+    {
+        // The user pressed the cancel button, so don't actually add the engine (assume they don't want to add the engine anymore).
+        return;
+    }
+
+    if (EngineName.isEmpty())
+    {
+        // The user entered a blank name, which isn't allowed, so don't add the engine and prompt them to retry.
+        QMessageBox ErrorPrompt;
+        ErrorPrompt.setWindowTitle("Uh Oh!");
+        ErrorPrompt.setText("The Name You Entered Was Unfortionately Invalid (Blank Name). Please Try Again.");
+        ErrorPrompt.setStandardButtons(QMessageBox::Ok);
+        ErrorPrompt.exec();
+        return;
+    }
+
+    // TODO Implement Saving & Loading Of (Custom? Or Binary Too?) Engine Installs
+
+    UnrealInstall CustomInstall(EngineName, InstallDirectory);
+
+    // Add the new install to the (known) unreal installs list & add it to the UI dropdown.
+    UnrealInstallations.append(CustomInstall);
+    ui->EngineVersionSelector->addItem(CustomInstall.GetName(), QVariant(ui->EngineVersionSelector->count()));
 }

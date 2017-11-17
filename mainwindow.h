@@ -34,6 +34,8 @@ private slots:
     /// Should ask for a confirmation, and then remove the files & all records of the plugin currently active.
     void on_RemovePluginButton_clicked();
 
+    void on_actionAdd_Unreal_Engine_Install_triggered();
+
 private:
     QList<UnrealInstall> GetEngineInstalls();
 
