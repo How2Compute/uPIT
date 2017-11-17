@@ -77,6 +77,8 @@ QList<UnrealInstall> MainWindow::GetEngineInstalls()
     // Get the ue4 versions
     QList<UnrealInstall> UnrealInstalls;
 
+    // TODO - the below code simply get's the binary installs, and not the source builds. Add something that allows the user to add source builds and save/load these.
+
 #ifdef Q_OS_WIN
 
     QStringList paths = QStandardPaths::standardLocations(QStandardPaths::GenericDataLocation);
@@ -105,7 +107,8 @@ QList<UnrealInstall> MainWindow::GetEngineInstalls()
 #ifdef QT_DEBUG
         qDebug() << "Unable To Open LauncherInstalled.dat Engine Configuration File....Skipping Automatic Engine Detection. Path: " << LauncherInstalledPath;
 #endif
-        // TODO skip
+
+        return UnrealInstalls;
 
     }
     QTextStream LauncherInstalledTS(&LauncherInstalled);
@@ -118,7 +121,8 @@ QList<UnrealInstall> MainWindow::GetEngineInstalls()
 #ifdef QT_DEBUG
          qDebug() << "Invalid LauncherInstalled.dat Engine Configuration File....Skipping Automatic Engine Detection";
 #endif
-         // TODO
+
+         return UnrealInstalls;
     }
 
     for (QJsonValue EngineInstallVal : jLauncherInstalled["InstallationList"].toArray())
@@ -131,7 +135,6 @@ QList<UnrealInstall> MainWindow::GetEngineInstalls()
 #endif
         }
 
-        // TODO these appear to only be launcher versions!
         QJsonObject EngineInstall = EngineInstallVal.toObject();
 
         QString EngineLocation = EngineInstall["InstallLocation"].toString();
