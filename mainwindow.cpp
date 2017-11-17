@@ -329,8 +329,14 @@ void MainWindow::on_InstallPluginButton_clicked()
             break;
     }
 
+    // Exit out if we don't need to install.
+    if (!bShouldInstall)
+    {
+        return;
+    }
+
     // Check whether or not there is a Binaries/<Platform> file
-    QString PluginBasePath = QFileInfo(selectedPlugin.GetPath()).absoluteDir().absolutePath();//QDir(selectedPlugin.GetPath()).absolutePath();
+    QString PluginBasePath = QFileInfo(selectedPlugin.GetPath()).absoluteDir().absolutePath();
 
     QDir PluginBinariesPath;
 
@@ -427,7 +433,19 @@ void MainWindow::on_InstallPluginButton_clicked()
 
                     if (p.exitStatus() == QProcess::NormalExit && p.exitCode() == 0)
                     {
+#ifdef QT_DEBUG
                         qDebug() << "Successfully Built Plugin Binaries.";
+#endif
+                        // Since we successfully built the plugin, set the plugin's path to this new location:
+                        /// It should be safe to assume the host project only has one project plugin
+                        QDirIterator PackageLocationIt(PackageLocation.path() + "/HostProject/Plugins",  QStringList() << "*.uplugin", QDir::Files, QDirIterator::Subdirectories);
+                        // TODO Does the plugin remain in HostProject? I believe it doesn't, but can't check as of writing this line.
+
+                        while (PackageLocationIt.hasNext())
+                        {
+                            QString PluginPath = PackageLocationIt.next();
+                            PluginBasePath = QFileInfo(PluginPath).absoluteDir().absolutePath();
+                        }
                     }
                     else
                     {
@@ -460,6 +478,78 @@ void MainWindow::on_InstallPluginButton_clicked()
     }
 
     // Copy over all of the plugin's files to the engine's plugins directory (use the uPIT subdirectory to keep a tab on them)
+    QFileInfoList Files = QDir(PluginBasePath).entryInfoList(QDir::AllEntries | QDir::AllDirs | QDir::NoDotAndDotDot | QDir::Hidden);
+
+#ifdef QT_DEBUG
+        qDebug() << "Copying Plugin Files...";
+#endif
+
+    QString DestinationDirectory = SelectedUnrealInstallation.GetPath() + "/Engine/Plugins/uPIT";
+
+    // Create the uPIT directory if it doesn't yet exist.
+    if (!QDir(DestinationDirectory).exists())
+    {
+        QDir().mkdir(DestinationDirectory);
+    }
+
+    // Create the plugin directory if it doesn't yet exist.
+    if (!QDir(DestinationDirectory + "/" + QDir(PluginBasePath).dirName()).exists())
+    {
+        QDir().mkdir(DestinationDirectory + "/" + QDir(PluginBasePath).dirName());
+    }
+
+    // TODO Make a progress bar? (that could also be used with like 0% then 50% then 100% when building binaries as it only has a few things we can track)
+
+    QDirIterator it(PluginBasePath, QStringList() << "*.*", QDir::Files, QDirIterator::Subdirectories);
+    while (it.hasNext())
+    {
+        // Get The Next File We Need To Copy
+        QString FilePath = it.next();
+
+        // Fetch/Create The Source And Destination Paths
+        QString Source = FilePath;
+        QString Destination = DestinationDirectory + "/" + QDir(PluginBasePath).dirName() + FilePath.remove(PluginBasePath);
+
+        // Create the directory if it doesn't yet exist.
+        if (!QDir(QFileInfo(Destination).absoluteDir().absolutePath()).exists())
+        {
+            QDir().mkdir(QFileInfo(Destination).absoluteDir().absolutePath());
+        }
+
+        QFile(Source).copy(Destination);
+
+#ifdef QT_DEBUG
+        qDebug() << Source << " -> " << Destination;
+#endif
+    }
+
+#ifdef QT_DEBUG
+        qDebug() << "Finished Copying Files.";
+#endif
+
+
+/*
+    for (QFileInfo File : Files)
+    {
+#ifdef QT_DEBUG
+
+        qDebug() << File.filePath() << " -> " << DestinationDirectory + File.filePath().remove(PluginBasePath);
+#endif
+        //QFile(File).copy()
+        //File.co
+    }
+*/
 
     // Tell the user we're done, and be sure to update the plugin so it's added to the engine & set to installed (so the user can only press the remove button on the plugin).
+    // TODO - Call a function that will clear & recreate the installed plugins list.
+
+    // Mark this plugin as installed, and then reset it so the installed button will be greyed out & the uninstall will be active.
+    selectedPlugin.SetInstalled(true);
+    SetPlugin(selectedPlugin);
+
+    // Show the user a popup telling them the plugin successfully installed.
+    QMessageBox FinishedPrompt;
+    FinishedPrompt.setWindowTitle("Done!");
+    FinishedPrompt.setText("We Successfully Installed " + selectedPlugin.GetName() + " to " + SelectedUnrealInstallation.GetName() + "!");
+    FinishedPrompt.exec();
 }
