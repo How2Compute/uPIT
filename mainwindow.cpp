@@ -21,6 +21,15 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    // Connect the menu's install plugin action up to the install plugin button's handler/slot.
+    QObject::connect(ui->actionInstall_Plugin, SIGNAL(triggered()), this, SLOT(on_InstallPluginButton_clicked()));
+
+    // Connect the menu's remove plugin action up to the remove plugin button's handler/slot.
+    QObject::connect(ui->actionRemove_Plugin, SIGNAL(triggered()), this, SLOT(on_RemovePluginButton_clicked()));
+
+    // Connect the menu's open plugin action up to the open plugin button's handler/slot.
+    QObject::connect(ui->actionOpen_Plugin, SIGNAL(triggered()), this, SLOT(on_OpenPluginButton_clicked()));
+
     // Clear the plugin details/etc.
     SetPlugin(UnrealPlugin::NoPlugin);
 
@@ -46,7 +55,9 @@ void MainWindow::SetPlugin(UnrealPlugin Plugin)
     {
         // Disable the plugin tools buttons
         ui->RemovePluginButton->setEnabled(false);
+        ui->actionRemove_Plugin->setEnabled(false);
         ui->InstallPluginButton->setEnabled(false);
+        ui->actionInstall_Plugin->setEnabled(false);
 
         ui->PluginName->setText("");
         ui->PluginDescription->setText("Please Select A Plugin First");
@@ -56,13 +67,23 @@ void MainWindow::SetPlugin(UnrealPlugin Plugin)
         // Allow the user to install or uninstall the plugin
         if (Plugin.GetInstalled())
         {
+            // Enable the uninstall/remove actions/buttons.
             ui->RemovePluginButton->setEnabled(true);
+            ui->actionRemove_Plugin->setEnabled(true);
+
+            // Disable the install plugin actions/buttons.
             ui->InstallPluginButton->setEnabled(false);
+            ui->actionInstall_Plugin->setEnabled(false);
         }
         else
         {
+            // Enable the install plugin actions/buttons
             ui->InstallPluginButton->setEnabled(true);
+            ui->actionInstall_Plugin->setEnabled(true);
+
+            // Disable the uninstall/remove actions/buttons.
             ui->RemovePluginButton->setEnabled(false);
+            ui->actionRemove_Plugin->setEnabled(false);
         }
 
         ui->PluginName->setText(Plugin.GetName());

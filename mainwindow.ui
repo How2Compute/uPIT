@@ -107,6 +107,22 @@ p, li { white-space: pre-wrap; }
      <height>21</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionOpen_Plugin"/>
+    <addaction name="actionInstall_Plugin"/>
+    <addaction name="actionRemove_Plugin"/>
+   </widget>
+   <widget class="QMenu" name="menuEdit">
+    <property name="title">
+     <string>Edit</string>
+    </property>
+    <addaction name="actionAdd_Unreal_Engine_Install"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuEdit"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -117,6 +133,29 @@ p, li { white-space: pre-wrap; }
    </attribute>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
+  <action name="actionAdd_Unreal_Engine_Install">
+   <property name="text">
+    <string>Add Unreal Engine Install</string>
+   </property>
+  </action>
+  <action name="actionOpen_Plugin">
+   <property name="text">
+    <string>Open Plugin</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
+   </property>
+  </action>
+  <action name="actionInstall_Plugin">
+   <property name="text">
+    <string>Install Plugin</string>
+   </property>
+  </action>
+  <action name="actionRemove_Plugin">
+   <property name="text">
+    <string>Remove Plugin</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources/>
