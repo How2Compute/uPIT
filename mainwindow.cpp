@@ -11,6 +11,7 @@
 #include <QComboBox>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QProcess>
 #include "ui_mainwindow.h"
 #include "pluginselectionbutton.h"
 
@@ -302,11 +303,161 @@ void MainWindow::on_OpenPluginButton_clicked()
 void MainWindow::on_InstallPluginButton_clicked()
 {
     // Prompt the user to double check they indeed want to install this plugin
+    QMessageBox UserConsentPrompt;
+    UserConsentPrompt.setWindowTitle("Are You Sure?");
+    UserConsentPrompt.setText("Are You Sure You Want To Install: " + selectedPlugin.GetName() + "?");
+    UserConsentPrompt.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+
+    int UserResponse = UserConsentPrompt.exec();
+    bool bShouldInstall;
+
+    // Which button did the user press?
+    switch (UserResponse)
+    {
+        case QMessageBox::Ok:
+            bShouldInstall = true;
+            break;
+        case QMessageBox::Cancel:
+            bShouldInstall = false;
+            break;
+        default:
+            // Invalid Response Received - Don't Care About It Too Much
+            bShouldInstall = false;
+#ifdef QT_DEBUG
+            qDebug() << "Invalid User Conscent Prompt Received";
+#endif
+            break;
+    }
 
     // Check whether or not there is a Binaries/<Platform> file
+    QString PluginBasePath = QFileInfo(selectedPlugin.GetPath()).absoluteDir().absolutePath();//QDir(selectedPlugin.GetPath()).absolutePath();
 
-    // If not, ask the user whether or not they want to rebuild it
+    QDir PluginBinariesPath;
+
+#ifdef Q_OS_WIN
+    // Get the Win64 binaries folder
+    PluginBinariesPath.setPath(PluginBasePath + "/Binaries/Win64");
+#elif defined Q_OS_WIN32
+    // Get the Win32 binaries folder
+     PluginBinariesPath.setPath(PluginBasePath + "/Binaries/Win32");    // TODO No plugins to test this with :(
+#elif defined Q_OS_LINUX
+    // Get the Linux binaries folder
+    PluginBinariesPath.setPath(PluginBasePath + "/Binaries/Linux");
+#else
+    // Unsupported OS! Won't care about binaries (so assume they simply exist).
+    PluginBinariesPath.setPath(PluginBasePath + "/Binaries");
+#endif
+
+#ifdef QT_DEBUG
+    qDebug() << "Plugin Base Path: " << PluginBasePath << "Binaries Path: " << PluginBinariesPath;
+#endif
+
+    // Does the binaries path exist, and does it contain any files? (first condition there to allow for unsupported platforms)
+    if (PluginBinariesPath.path() != PluginBasePath + "/Binaries" && !(PluginBinariesPath.exists() && !PluginBinariesPath.entryInfoList(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden).isEmpty()))
+    {
+        // If not, ask the user whether or not they want to rebuild it
+        QMessageBox AskForRebuildPrompt;
+        AskForRebuildPrompt.setWindowTitle("Rebuild Plugin Binaires?");
+        AskForRebuildPrompt.setText("We Where Unable To Detect Binaries For You Platform - Would You Like To (Re-)Build These?");
+        AskForRebuildPrompt.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+
+        int UserResponse = AskForRebuildPrompt.exec();
+        bool bShouldRebuild;
+
+        // Which button did the user press?
+        switch (UserResponse)
+        {
+            case QMessageBox::Yes:
+                bShouldRebuild = true;
+                break;
+            case QMessageBox::No:
+                bShouldRebuild = false;
+                break;
+            default:
+                // Invalid Response Received - Don't Care About It Too Much
+                bShouldRebuild = false;
+    #ifdef QT_DEBUG
+                qDebug() << "Invalid User Conscent Prompt Received";
+    #endif
+                break;
+        }
+
         // If they click yes to this, run the Rocket command based on the currently selected engine & build the plugins into a temporary appdata folder
+        if (bShouldRebuild)
+        {
+            bool bRunningWindows;
+
+#ifdef Q_OS_WIN
+                bRunningWindows = true;
+#elif defined Q_OS_WIN32
+                bRunningWindows = true;
+#else
+                // TODO Add Linux Support Too!
+                bRunningWindows = false;
+#endif
+                if (bRunningWindows)
+                {
+                    QString RunUATPath = SelectedUnrealInstallation.GetPath() + "/Engine/Build/BatchFiles/RunUAT.bat";
+                    QStringList RunUATFlags;
+                    RunUATFlags << "BuildPlugin";
+                    RunUATFlags << "-Plugin=" + selectedPlugin.GetPath();
+
+                    // Get or create a path where to package the plugin
+                    QDir PackageLocation = QStandardPaths::standardLocations(QStandardPaths::DataLocation)[0] + "/BuiltApps/" + selectedPlugin.GetName() + "-" + SelectedUnrealInstallation.GetName();
+
+                    if (!PackageLocation.exists())
+                    {
+                        // Create the directory (use a default constructor due to the way mdkir works)
+                        QDir().mkdir(PackageLocation.path());
+                    }
+
+                    RunUATFlags << "-Package=" + PackageLocation.path();
+                    RunUATFlags << "-Rocket";
+
+#ifdef QT_DEBUG
+                    qDebug() << "Going to run " << RunUATPath << " with the flags: " << RunUATFlags << " to build this plugin...";
+#endif
+
+                    // Run the UAT and wait until it's finished - TODO show the user some feedback so they don't think the app is hanging
+                    QProcess p;
+                    p.start(RunUATPath, RunUATFlags);
+
+                    // Give it no timeout because plugins can be pretty large, and builds, depending on the system, can take (freaking) forever!
+                    p.waitForFinished(-1);
+
+                    if (p.exitStatus() == QProcess::NormalExit && p.exitCode() == 0)
+                    {
+                        qDebug() << "Successfully Built Plugin Binaries.";
+                    }
+                    else
+                    {
+#ifdef QT_DEBUG
+                        qDebug() << "Finished Building Plugin Binaries, But Failed. Output Log:";
+                        qDebug() <<  QString(p.readAll());
+#endif
+
+                        // If not, ask the user whether or not they want to rebuild it
+                        QMessageBox BuildFailedPrompt;
+                        BuildFailedPrompt.setWindowTitle("Failed To Build Plugin Binaries");
+                        BuildFailedPrompt.setText("There Was An Issue Building Your Plugin's Binaries. Would You Still Like To Continue On With The Installation?");
+                        BuildFailedPrompt.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+
+                        int UserResponse = BuildFailedPrompt.exec();
+
+                        // Which button did the user press?
+                        switch (UserResponse)
+                        {
+                            case QMessageBox::Ok:
+                                break;
+                            case QMessageBox::Cancel:
+                                return;
+                                break;
+                        }
+                    }
+
+                }
+        }
+    }
 
     // Copy over all of the plugin's files to the engine's plugins directory (use the uPIT subdirectory to keep a tab on them)
 
