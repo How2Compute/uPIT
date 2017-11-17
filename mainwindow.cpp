@@ -551,3 +551,16 @@ void MainWindow::on_InstallPluginButton_clicked()
     FinishedPrompt.setText("We Successfully Installed " + selectedPlugin.GetName() + " to " + SelectedUnrealInstallation.GetName() + "!");
     FinishedPrompt.exec();
 }
+
+void MainWindow::on_RemovePluginButton_clicked()
+{
+    // Double check with the user that they indeed want to uninstall the plugin.
+
+    // Remove the plugin's files.
+
+    // Set the selected plugin to the blank plugin/NoPlugin.
+
+    // Refresh the installed plugins list.
+
+    // Tell the user we successfully uninstalled the plugin.
+}

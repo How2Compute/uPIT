@@ -30,6 +30,10 @@ private slots:
     /// Should ask for a confirmation, check if there are any binaries (I don't believe checking engine version here is possible), if they aren't there ask if they want to rebuild (Using rocket), and finally install the plugin.
     void on_InstallPluginButton_clicked();
 
+    // Called when the user wants to uninstall/remove a plugin.
+    /// Should ask for a confirmation, and then remove the files & all records of the plugin currently active.
+    void on_RemovePluginButton_clicked();
+
 private:
     QList<UnrealInstall> GetEngineInstalls();
 
