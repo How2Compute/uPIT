@@ -20,8 +20,6 @@ public:
     void SetPlugin(UnrealPlugin Plugin);
 
 private slots:
-    void on_EngineVersionSelector_currentIndexChanged(const QString &arg1);
-
     void on_EngineVersionSelector_currentIndexChanged(int index);
 
     // Called when the user wants to open a non-installed plugin.
