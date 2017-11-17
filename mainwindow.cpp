@@ -9,6 +9,8 @@
 #include <QJsonArray>
 #include <QList>
 #include <QComboBox>
+#include <QFileDialog>
+#include <QMessageBox>
 #include "ui_mainwindow.h"
 #include "pluginselectionbutton.h"
 
@@ -163,6 +165,8 @@ void MainWindow::on_EngineVersionSelector_currentIndexChanged(int index)
     // Use the list's index we got when we where adding these to get the right engine version
     UnrealInstall UnrealInstallation = UnrealInstallations[ui->EngineVersionSelector->itemData(index).toInt()];
 
+    SelectedUnrealInstallation = UnrealInstallation;
+
 #ifdef QT_DEBUG
     qDebug() << "Unreal Version Switched To {Name=" << UnrealInstallation.GetName() << ";Path=" << UnrealInstallation.GetPath() << "}";
 #endif
@@ -250,8 +254,47 @@ void MainWindow::on_EngineVersionSelector_currentIndexChanged(int index)
 void MainWindow::on_OpenPluginButton_clicked()
 {
     // Allow the user to browse to where the uplugin file is located
+    QString UpluginFilePath = QFileDialog::getOpenFileName(this, "Open Your Plugin's .uplugin File", "", "Unreal Plugin (*.uplugin)");
+
+    // If the string was blank, prompt the user. - TODO evaluate whether or not this is even needed.
+    if (UpluginFilePath.isEmpty())
+    {
+        // It appears no UPLUGIN file was selected, show a popup error
+#ifdef QT_DEBUG
+        qDebug() << "No Or Invalid .uplugin File Selected";
+#endif
+        QMessageBox ErrorPopup;
+        ErrorPopup.setWindowTitle("Invalid Unreal Plugin Selected");
+        ErrorPopup.setText("You A. didn't select a uplugin file, or B. the file was invalid. Please try this again.");
+        ErrorPopup.exec();
+        return;
+    }
 
     // Parse the UPlugin file & create an UnrealPlugin based on this (TODO abstract this functionality for reusability)
+    QFile PluginMeta(UpluginFilePath);
+
+    // Attempt to open the plugin's .uplugin file and pop up an error is there where any issues.
+    if (!PluginMeta.open(QFile::ReadOnly | QFile::Text))
+    {
+#ifdef QT_DEBUG
+        qDebug() << "Unable To Open UPlugin File For Plugin Located At: " << UpluginFilePath << "...Skipping Plugin!";
+#endif
+        QMessageBox ErrorPopup;
+        ErrorPopup.setWindowTitle("Read Error");
+        ErrorPopup.setText("Unable To Read The Selected UPLUGIN File.");
+        ErrorPopup.exec();
+        return;
+    }
+
+    QTextStream PluginMetaTS(&PluginMeta);
+    QString PluginMetaString = PluginMetaTS.readAll();
+
+    QJsonObject jPlugin = QJsonDocument::fromJson(PluginMetaString.toUtf8()).object();
+
+    QString PluginName = jPlugin["FriendlyName"].toString();
+    QString PluginDescription = jPlugin["Description"].toString();
 
     // Set the newly opened plugin so the user can install it.
+    SetPlugin(UnrealPlugin(PluginName, UpluginFilePath, PluginDescription, SelectedUnrealInstallation.GetName(), PluginSource::PS_uPIT, false));
+
 }

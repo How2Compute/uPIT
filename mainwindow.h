@@ -33,6 +33,7 @@ private:
     Ui::MainWindow *ui;
 
     UnrealPlugin selectedPlugin;
+    UnrealInstall SelectedUnrealInstallation;
 
     QList<UnrealInstall> UnrealInstallations;
 
