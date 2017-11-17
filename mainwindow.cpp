@@ -555,12 +555,53 @@ void MainWindow::on_InstallPluginButton_clicked()
 void MainWindow::on_RemovePluginButton_clicked()
 {
     // Double check with the user that they indeed want to uninstall the plugin.
+    QMessageBox UserConsentPrompt;
+    UserConsentPrompt.setWindowTitle("Are You Sure?");
+    UserConsentPrompt.setText("Are You Sure You Want To Uninstall " + selectedPlugin.GetName() + " from " + SelectedUnrealInstallation.GetName() + "?");
+    UserConsentPrompt.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+
+    int UserResponse = UserConsentPrompt.exec();
+    bool bShouldUninstall;
+
+    // Which button did the user press?
+    switch (UserResponse)
+    {
+        case QMessageBox::Ok:
+            bShouldUninstall = true;
+            break;
+        case QMessageBox::Cancel:
+            bShouldUninstall = false;
+            break;
+        default:
+            // Invalid Response Received - Don't Care About It Too Much
+            bShouldUninstall = false;
+#ifdef QT_DEBUG
+            qDebug() << "Invalid User Conscent Prompt Response";
+#endif
+            break;
+    }
+
+    // If the user didn't intend to uninstall, exit out now so the uninstall logic isn't run.
+    if (!bShouldUninstall)
+    {
+        return;
+    }
+
+    // Store the plugin's name so we can use it when we give the success prompt (as selectedPlugin will be set to blank when it's finished uninstalling).
+    QString PluginName = selectedPlugin.GetName();
 
     // Remove the plugin's files.
+    QDir(QFileInfo(selectedPlugin.GetPath()).absoluteDir().absolutePath()).removeRecursively();
 
     // Set the selected plugin to the blank plugin/NoPlugin.
+    SetPlugin(UnrealPlugin::NoPlugin);
 
     // Refresh the installed plugins list.
+    RefreshPlugins(SelectedUnrealInstallation);
 
     // Tell the user we successfully uninstalled the plugin.
+    QMessageBox SuccessPrompt;
+    SuccessPrompt.setWindowTitle("Done!");
+    SuccessPrompt.setText("Successfully Uninstalled " + PluginName + " from " + SelectedUnrealInstallation.GetName() + "!");
+    SuccessPrompt.exec();
 }
