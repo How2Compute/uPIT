@@ -26,6 +26,10 @@ private slots:
     /// Should ask the user to browse to it, create a UnrealPlugin based on this, and then set it using SetPlugin();
     void on_OpenPluginButton_clicked();
 
+    // Called when the user wants to install a plugin
+    /// Should ask for a confirmation, check if there are any binaries (I don't believe checking engine version here is possible), if they aren't there ask if they want to rebuild (Using rocket), and finally install the plugin.
+    void on_InstallPluginButton_clicked();
+
 private:
     QList<UnrealInstall> GetEngineInstalls();
 

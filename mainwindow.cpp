@@ -298,3 +298,17 @@ void MainWindow::on_OpenPluginButton_clicked()
     SetPlugin(UnrealPlugin(PluginName, UpluginFilePath, PluginDescription, SelectedUnrealInstallation.GetName(), PluginSource::PS_uPIT, false));
 
 }
+
+void MainWindow::on_InstallPluginButton_clicked()
+{
+    // Prompt the user to double check they indeed want to install this plugin
+
+    // Check whether or not there is a Binaries/<Platform> file
+
+    // If not, ask the user whether or not they want to rebuild it
+        // If they click yes to this, run the Rocket command based on the currently selected engine & build the plugins into a temporary appdata folder
+
+    // Copy over all of the plugin's files to the engine's plugins directory (use the uPIT subdirectory to keep a tab on them)
+
+    // Tell the user we're done, and be sure to update the plugin so it's added to the engine & set to installed (so the user can only press the remove button on the plugin).
+}
