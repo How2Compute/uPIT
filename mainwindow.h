@@ -33,6 +33,8 @@ private slots:
 private:
     QList<UnrealInstall> GetEngineInstalls();
 
+    void RefreshPlugins(UnrealInstall UnrealInstallation);
+
 private:
     Ui::MainWindow *ui;
 

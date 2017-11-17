@@ -155,17 +155,8 @@ QList<UnrealInstall> MainWindow::GetEngineInstalls()
     return UnrealInstalls;
 }
 
-void MainWindow::on_EngineVersionSelector_currentIndexChanged(int index)
+void MainWindow::RefreshPlugins(UnrealInstall UnrealInstallation)
 {
-    // Use the list's index we got when we where adding these to get the right engine version
-    UnrealInstall UnrealInstallation = UnrealInstallations[ui->EngineVersionSelector->itemData(index).toInt()];
-
-    SelectedUnrealInstallation = UnrealInstallation;
-
-#ifdef QT_DEBUG
-    qDebug() << "Unreal Version Switched To {Name=" << UnrealInstallation.GetName() << ";Path=" << UnrealInstallation.GetPath() << "}";
-#endif
-
     QDir MarketplaceDir(UnrealInstallation.GetPath() + "/Engine/Plugins/Marketplace");
 
     // Where we will install plugins to by default
@@ -240,11 +231,36 @@ void MainWindow::on_EngineVersionSelector_currentIndexChanged(int index)
         SetPlugin(InstalledPlugins[0]);
     }
 
+    // Clear the items in the installed plugins list
+   // QList<QWidget*> PluginListWidgets = ui->PluginList->findChildren<QWidget*>(/*QString(), Qt::FindDirectChildrenOnly*/);
+/*
+    for (QWidget *PluginWidget : PluginListWidgets)
+    {
+        ui->PluginList->removeWidget(PluginWidget);
+    }*/
+    // TODO fix the above
+
+    // Add the new plugins to the list
     for (UnrealPlugin Plugin : InstalledPlugins)
     {
         // TODO Make the horizontal box scrollable and make the layout neater (eg. not spaced out over the entire thing, but close to eachother vertically)
         ui->PluginList->addWidget(new PluginSelectionButton(Plugin, this));
     }
+}
+
+void MainWindow::on_EngineVersionSelector_currentIndexChanged(int index)
+{
+    // Use the list's index we got when we where adding these to get the right engine version
+    UnrealInstall UnrealInstallation = UnrealInstallations[ui->EngineVersionSelector->itemData(index).toInt()];
+
+    SelectedUnrealInstallation = UnrealInstallation;
+
+#ifdef QT_DEBUG
+    qDebug() << "Unreal Version Switched To {Name=" << UnrealInstallation.GetName() << ";Path=" << UnrealInstallation.GetPath() << "}";
+#endif
+
+    // Refresh the plugin list for this new engine version
+    RefreshPlugins(SelectedUnrealInstallation);
 }
 
 void MainWindow::on_OpenPluginButton_clicked()
