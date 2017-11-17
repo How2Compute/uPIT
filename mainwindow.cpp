@@ -13,6 +13,7 @@
 #include <QMessageBox>
 #include <QProcess>
 #include <QInputDialog>
+#include <QSettings>
 #include "ui_mainwindow.h"
 #include "pluginselectionbutton.h"
 
@@ -99,7 +100,7 @@ QList<UnrealInstall> MainWindow::GetEngineInstalls()
     // Get the ue4 versions
     QList<UnrealInstall> UnrealInstalls;
 
-    // TODO - the below code simply get's the binary installs, and not the source builds. Add something that allows the user to add source builds and save/load these.
+    // Fetch the binary install locations (for windows).
 
 #ifdef Q_OS_WIN
 
@@ -177,6 +178,35 @@ QList<UnrealInstall> MainWindow::GetEngineInstalls()
 
 #endif
 
+    // Fetch any custom ue4 install paths the user may have added
+
+    // Open up uPIT's settings file
+    QSettings Settings("HowToCompute", "uPIT");
+
+    // Create a quick list to add the custom installs to (so they can be added seperate of the *proper* list in case anything goes wrong)
+    QList<UnrealInstall> CustomInstalls;
+
+    // Read the Custom Unreal Engine Installs array from the settings object.
+    int size = Settings.beginReadArray("CustomUnrealEngineInstalls");
+    for (int i = 0; i < size; ++i) {
+        // Get this element out of the settings
+        Settings.setArrayIndex(i);
+
+        // Extract the installation's name & path
+        QString InstallName = Settings.value("Name").toString();
+        QString InstallPath = Settings.value("Path").toString();
+
+        // Create an UnrealInstall based on the name & path, and add it to the Custom Installs list.
+        CustomInstalls.append(UnrealInstall(InstallName, InstallPath));
+    }
+
+    // Done reading, so "close" the array.
+    Settings.endArray();
+
+    // Add the list of custom installs to the list of (binary) Unreal Engine installations.
+    UnrealInstalls += CustomInstalls;
+
+    // Return the final list of UE4 binary installs & custom installs.
     return UnrealInstalls;
 }
 
@@ -675,11 +705,25 @@ void MainWindow::on_actionAdd_Unreal_Engine_Install_triggered()
         return;
     }
 
-    // TODO Implement Saving & Loading Of (Custom? Or Binary Too?) Engine Installs
+    // Add this newly created custom installation to the list of custom ue4 installations.
+
+    QSettings Settings("HowToCompute", "uPIT");
 
     UnrealInstall CustomInstall(EngineName, InstallDirectory);
 
+    // Get the number of items in the array.
+    int size = Settings.beginReadArray("CustomUnrealEngineInstalls");
+    Settings.endArray();
+
+    // Append this install to the engine's custom installs list.
+    Settings.beginWriteArray("CustomUnrealEngineInstalls");
+    Settings.setArrayIndex(size);
+    Settings.setValue("Name", CustomInstall.GetName());
+    Settings.setValue("Path", CustomInstall.GetPath());
+    Settings.endArray();
+
     // Add the new install to the (known) unreal installs list & add it to the UI dropdown.
     UnrealInstallations.append(CustomInstall);
+
     ui->EngineVersionSelector->addItem(CustomInstall.GetName(), QVariant(ui->EngineVersionSelector->count()));
 }
