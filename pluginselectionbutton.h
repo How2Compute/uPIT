@@ -5,23 +5,19 @@
 #include "unrealplugin.h"
 #include "mainwindow.h"
 #include <QPushButton>
+#include <QListWidgetItem>
 
-class PluginSelectionButton : public QWidget
+class PluginSelectionButton : public QListWidgetItem
 {
-    Q_OBJECT
+    //Q_OBJECT
 public:
-    explicit PluginSelectionButton(QWidget *parent = nullptr);
-    PluginSelectionButton(UnrealPlugin Plugin, MainWindow *window);
+    PluginSelectionButton(UnrealPlugin Plugin, QListWidget *parent);
 
-signals:
-
-//private slots:
-public Q_SLOTS:
-    void onPluginSelected(bool checked);
+    // Returns the plugin that this item was created with.
+    UnrealPlugin GetPlugin();
 
 private:
-    QPushButton *button;
-    MainWindow *mWindow;
+    QListWidgetItem *button;
     UnrealPlugin Plugin;
 
 };

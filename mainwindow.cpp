@@ -14,6 +14,7 @@
 #include <QProcess>
 #include <QInputDialog>
 #include <QSettings>
+#include <QListWidget>
 #include "ui_mainwindow.h"
 #include "pluginselectionbutton.h"
 
@@ -293,13 +294,22 @@ void MainWindow::RefreshPlugins(UnrealInstall UnrealInstallation)
     {
         ui->PluginList->removeWidget(PluginWidget);
     }*/
-    // TODO fix the above
+    // TODO Does this only clear the ones in view? (eg. if there where like 100 plugins and not all where in view, does it still clear them all?)
+    ui->PluginList->clear();
 
     // Add the new plugins to the list
     for (UnrealPlugin Plugin : InstalledPlugins)
     {
         // TODO Make the horizontal box scrollable and make the layout neater (eg. not spaced out over the entire thing, but close to eachother vertically)
-        ui->PluginList->addWidget(new PluginSelectionButton(Plugin, this));
+        //ui->PluginList->addWidget(new PluginSelectionButton(Plugin, this));
+        //QListWidgetItem  PluginItem(Plugin.GetName(), ui->PluginList);
+        //ui->PluginList->addItem(new PluginSelectionButton(Plugin, ui->PluginList));
+        // Add this plugin as the next (by using ->count() to get the next unused index) "slot" in the list.
+        // For some wierd reason the text needs to be set for a second time when using insertItem over giving it the parent directory (which causes other issues).
+        PluginSelectionButton *PluginEntry = new PluginSelectionButton(Plugin, ui->PluginList);
+        PluginEntry->setText(Plugin.GetName());
+        ui->PluginList->insertItem(ui->PluginList->count(), PluginEntry);
+
     }
 }
 
@@ -726,4 +736,26 @@ void MainWindow::on_actionAdd_Unreal_Engine_Install_triggered()
     UnrealInstallations.append(CustomInstall);
 
     ui->EngineVersionSelector->addItem(CustomInstall.GetName(), QVariant(ui->EngineVersionSelector->count()));
+}
+
+void MainWindow::on_PluginList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous)
+{
+    // Cast the (generic) item into a (usable) plugin item.
+    PluginSelectionButton *PluginItem = (PluginSelectionButton*)current;//dynamic_cast<PluginSelectionButton*>(current);
+
+    // Check whether or not the cast was successful.
+    if (!PluginItem)
+    {
+#ifdef QT_DEBUG
+        qDebug() << "One Of The (Plugin) List Widget Items Was Invalid!";
+#endif
+        return;
+    }
+
+   // "Select" the item's button
+   SetPlugin(PluginItem->GetPlugin());
+
+#ifdef QT_DEBUG
+   qDebug() << "Selected Plugin: " << PluginItem->GetPlugin().GetName();
+#endif
 }

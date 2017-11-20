@@ -14,17 +14,6 @@
    <string>µPIT By HowToCompute</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <widget class="QWidget" name="verticalLayoutWidget">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>50</y>
-      <width>151</width>
-      <height>181</height>
-     </rect>
-    </property>
-    <layout class="QVBoxLayout" name="PluginList"/>
-   </widget>
    <widget class="QComboBox" name="EngineVersionSelector">
     <property name="geometry">
      <rect>
@@ -95,6 +84,16 @@ p, li { white-space: pre-wrap; }
     </property>
     <property name="text">
      <string>Open Plugin</string>
+    </property>
+   </widget>
+   <widget class="QListWidget" name="PluginList">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>40</y>
+      <width>151</width>
+      <height>192</height>
+     </rect>
     </property>
    </widget>
   </widget>

@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QListWidget>
 #include "unrealplugin.h"
 #include "unrealinstall.h"
 
@@ -35,6 +36,8 @@ private slots:
     void on_RemovePluginButton_clicked();
 
     void on_actionAdd_Unreal_Engine_Install_triggered();
+
+    void on_PluginList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
 
 private:
     QList<UnrealInstall> GetEngineInstalls();
