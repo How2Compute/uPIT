@@ -16,7 +16,7 @@
 #include <QSettings>
 #include <QListWidget>
 #include "ui_mainwindow.h"
-#include "pluginselectionbutton.h"
+#include "pluginlistitem.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -287,29 +287,17 @@ void MainWindow::RefreshPlugins(UnrealInstall UnrealInstallation)
         SetPlugin(InstalledPlugins[0]);
     }
 
-    // Clear the items in the installed plugins list
-   // QList<QWidget*> PluginListWidgets = ui->PluginList->findChildren<QWidget*>(/*QString(), Qt::FindDirectChildrenOnly*/);
-/*
-    for (QWidget *PluginWidget : PluginListWidgets)
-    {
-        ui->PluginList->removeWidget(PluginWidget);
-    }*/
+    // Clear the items/plugins in the installed plugins list so we can replace them with the new list.
     // TODO Does this only clear the ones in view? (eg. if there where like 100 plugins and not all where in view, does it still clear them all?)
     ui->PluginList->clear();
 
     // Add the new plugins to the list
     for (UnrealPlugin Plugin : InstalledPlugins)
-    {
-        // TODO Make the horizontal box scrollable and make the layout neater (eg. not spaced out over the entire thing, but close to eachother vertically)
-        //ui->PluginList->addWidget(new PluginSelectionButton(Plugin, this));
-        //QListWidgetItem  PluginItem(Plugin.GetName(), ui->PluginList);
-        //ui->PluginList->addItem(new PluginSelectionButton(Plugin, ui->PluginList));
-        // Add this plugin as the next (by using ->count() to get the next unused index) "slot" in the list.
+    {   // Add this plugin as the next (by using ->count() to get the next unused index) "slot" in the list.
         // For some wierd reason the text needs to be set for a second time when using insertItem over giving it the parent directory (which causes other issues).
-        PluginSelectionButton *PluginEntry = new PluginSelectionButton(Plugin, ui->PluginList);
+        PluginListItem *PluginEntry = new PluginListItem(Plugin, ui->PluginList);
         PluginEntry->setText(Plugin.GetName());
         ui->PluginList->insertItem(ui->PluginList->count(), PluginEntry);
-
     }
 }
 
@@ -741,7 +729,7 @@ void MainWindow::on_actionAdd_Unreal_Engine_Install_triggered()
 void MainWindow::on_PluginList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous)
 {
     // Cast the (generic) item into a (usable) plugin item.
-    PluginSelectionButton *PluginItem = (PluginSelectionButton*)current;//dynamic_cast<PluginSelectionButton*>(current);
+    PluginListItem *PluginItem = (PluginListItem*)current;//dynamic_cast<PluginSelectionButton*>(current);
 
     // Check whether or not the cast was successful.
     if (!PluginItem)
