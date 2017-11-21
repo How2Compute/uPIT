@@ -1,5 +1,4 @@
 #include "pluginselectionbutton.h"
-#include <qDebug>
 
 PluginSelectionButton::PluginSelectionButton(UnrealPlugin Plugin, QListWidget *parent)
 {

@@ -4,7 +4,6 @@
 #include <QWidget>
 #include "unrealplugin.h"
 #include "mainwindow.h"
-#include <QPushButton>
 #include <QListWidgetItem>
 
 class PluginSelectionButton : public QListWidgetItem
