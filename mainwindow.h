@@ -40,14 +40,14 @@ private slots:
 
     void on_PluginList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
 
-    void on_PluginBuild_complete(int exitCode, QProcess::ExitStatus exitStatus);
-
 private:
     QList<UnrealInstall> GetEngineInstalls();
 
     void RefreshPlugins(UnrealInstall UnrealInstallation);
 
-    void CopyPluginFiles(QString SourcePath, QString DestinationPath);
+    bool on_PluginBuild_complete(int exitCode, QProcess::ExitStatus exitStatus);
+
+    bool CopyPluginFiles(QString SourcePath, QString DestinationPath);
 
     void PluginInstallComplete();
 

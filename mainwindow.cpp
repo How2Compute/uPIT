@@ -301,7 +301,7 @@ void MainWindow::RefreshPlugins(UnrealInstall UnrealInstallation)
     }
 }
 
-void MainWindow::CopyPluginFiles(QString SourcePath, QString DestinationPath)
+bool MainWindow::CopyPluginFiles(QString SourcePath, QString DestinationPath)
 {
     // Copy over all of the plugin's files to the engine's plugins directory (use the uPIT subdirectory to keep a tab on them)
     QFileInfoList Files = QDir(SourcePath).entryInfoList(QDir::AllEntries | QDir::AllDirs | QDir::NoDotAndDotDot | QDir::Hidden);
@@ -323,8 +323,6 @@ void MainWindow::CopyPluginFiles(QString SourcePath, QString DestinationPath)
     {
         QDir().mkdir(DestinationDirectory + "/" + QDir(SourcePath).dirName());
     }
-
-    // TODO Make a progress bar? (that could also be used with like 0% then 50% then 100% when building binaries as it only has a few things we can track)
 
     QDirIterator it(SourcePath, QStringList() << "*.*", QDir::Files, QDirIterator::Subdirectories);
     while (it.hasNext())
@@ -352,6 +350,7 @@ void MainWindow::CopyPluginFiles(QString SourcePath, QString DestinationPath)
 #ifdef QT_DEBUG
         qDebug() << "Finished Copying Files.";
 #endif
+    return true;
 }
 
 void MainWindow::PluginInstallComplete()
@@ -638,8 +637,10 @@ void MainWindow::on_InstallPluginButton_clicked()
 
         // Set the progress bar to 75% as we skipped the build, but then copy the files & show the finished installing plugin popup.
         ui->progressBar->setValue(75);
-        CopyPluginFiles(PluginBasePath, SelectedUnrealInstallation.GetPath() + "/Engine/Plugins/uPIT");
-        PluginInstallComplete();
+        if (CopyPluginFiles(PluginBasePath, SelectedUnrealInstallation.GetPath() + "/Engine/Plugins/uPIT"))
+        {
+            PluginInstallComplete();
+        }
     }
 }
 
@@ -786,7 +787,7 @@ void MainWindow::on_PluginList_currentItemChanged(QListWidgetItem *current, QLis
 #endif
 }
 
-void MainWindow::on_PluginBuild_complete(int exitCode, QProcess::ExitStatus exitStatus)
+bool MainWindow::on_PluginBuild_complete(int exitCode, QProcess::ExitStatus exitStatus)
 {
     if (exitStatus == QProcess::NormalExit && exitCode == 0)
     {
@@ -820,13 +821,17 @@ void MainWindow::on_PluginBuild_complete(int exitCode, QProcess::ExitStatus exit
                 // Reset the progress bar & return so the rest doesn't get executed
                 ui->progressBar->setEnabled(false);
                 ui->progressBar->setValue(0);
-                return;
+                return false;
                 break;
         }
     }
 
     ui->progressBar->setValue(75);
-    CopyPluginFiles(PluginInstallState["PluginBasePath"], PluginInstallState["EnginePath"] + "/Engine/Plugins/uPIT");
+    if (CopyPluginFiles(PluginInstallState["PluginBasePath"], PluginInstallState["EnginePath"] + "/Engine/Plugins/uPIT"))
+    {
+        PluginInstallComplete();
+        return true;
+    }
 
-    PluginInstallComplete();
+    return false;
 }
