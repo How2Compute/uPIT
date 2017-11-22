@@ -409,17 +409,13 @@ void MainWindow::on_OpenPluginButton_clicked()
     // Allow the user to browse to where the uplugin file is located
     QString UpluginFilePath = QFileDialog::getOpenFileName(this, "Open Your Plugin's .uplugin File", "", "Unreal Plugin (*.uplugin)");
 
-    // If the string was blank, prompt the user. - TODO evaluate whether or not this is even needed.
+    // Did the user select a plugin?
     if (UpluginFilePath.isEmpty())
     {
-        // It appears no UPLUGIN file was selected, show a popup error
+        // It appears no UPLUGIN file was selected, so don't perform any plugin loading logic (instead return)
 #ifdef QT_DEBUG
         qDebug() << "No Or Invalid .uplugin File Selected";
 #endif
-        QMessageBox ErrorPopup;
-        ErrorPopup.setWindowTitle("Invalid Unreal Plugin Selected");
-        ErrorPopup.setText("You A. didn't select a uplugin file, or B. the file was invalid. Please try this again.");
-        ErrorPopup.exec();
         return;
     }
 
