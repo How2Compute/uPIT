@@ -531,18 +531,9 @@ void MainWindow::on_InstallPluginButton_clicked()
         // If they click yes to this, run the Rocket command based on the currently selected engine & build the plugins into a temporary appdata folder
         if (bShouldRebuild)
         {
-            bool bRunningWindows;
 
-#ifdef Q_OS_WIN
-                bRunningWindows = true;
-#elif defined Q_OS_WIN32
-                bRunningWindows = true;
-#else
-                // TODO Add Linux Support Too!
-                bRunningWindows = false;
-#endif
-                if (bRunningWindows)
-                {
+// Windows-specific rebuild code
+#if defined(Q_OS_WIN) || defined(Q_OS_WIN32)
                     QString RunUATPath = SelectedUnrealInstallation.GetPath() + "/Engine/Build/BatchFiles/RunUAT.bat";
                     QStringList RunUATFlags;
                     RunUATFlags << "BuildPlugin";
@@ -572,19 +563,84 @@ void MainWindow::on_InstallPluginButton_clicked()
                     connect(p, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),this, &MainWindow::on_PluginBuild_complete);
                     p->start(RunUATPath, RunUATFlags);
 
-
-
                     // Set the progress bar to 50% to tell the user the build is in progress
                     ui->progressBar->setValue(50);
 
                     // Return so the async callback can do it's thing and we don't copy the files twice.
                     return;
-                }
+
+#elif defined(Q_OS_LINUX)
+            QString RunUATPath = SelectedUnrealInstallation.GetPath() + "/Engine/Build/BatchFiles/RunUAT.sh";
+            QStringList RunUATFlags;
+            RunUATFlags << "BuildPlugin";
+            RunUATFlags << "-Plugin=" + selectedPlugin.GetPath();
+
+            // Get or create a path where to package the plugin
+            QDir PackageLocation = QStandardPaths::standardLocations(QStandardPaths::DataLocation)[0] + "/BuiltPlugins/" + selectedPlugin.GetName() + "-" + SelectedUnrealInstallation.GetName();
+
+            if (!PackageLocation.exists())
+            {
+                // Create the directory (use a default constructor due to the way mdkir works)
+                QDir().mkdir(PackageLocation.path());
+            }
+
+            RunUATFlags << "-Package=" + PackageLocation.path();
+            RunUATFlags << "-Rocket";
+
+#ifdef QT_DEBUG
+            qDebug() << "Going to run " << RunUATPath << " with the flags: " << RunUATFlags << " to build this plugin...";
+#endif
+            PluginInstallState["PluginBasePath"] = PluginBasePath;
+            PluginInstallState["PackageLocation"] = PackageLocation.path();
+            PluginInstallState["EnginePath"] = SelectedUnrealInstallation.GetPath();
+            // Run the UAT and wait until it's finished
+            QProcess *p = new QProcess(this);
+
+            connect(p, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),this, &MainWindow::on_PluginBuild_complete);
+            p->start(RunUATPath, RunUATFlags);
+
+            // Set the progress bar to 50% to tell the user the build is in progress
+            ui->progressBar->setValue(50);
+
+            // Return so the async callback can do it's thing and we don't copy the files twice.
+            return;
+
+#else
+            // The platform isn't supported (most likely OS X), so show the user a popup telling them this.
+            QMessageBox PlatformNotSupportedPrompt;
+            PlatformNotSupportedPrompt.setWindowTitle("Platform Not Supported");
+            PlatformNotSupportedPrompt.setText("We don't (currently) support building binaries automatically on this platform! Would you still like to continue the installation?");
+            PlatformNotSupportedPrompt.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+
+            int UserResponse = PlatformNotSupportedPrompt.exec();
+
+            // Which button did the user press?
+            switch (UserResponse)
+            {
+                case QMessageBox::Ok:
+                    // User doesn't mind - continue on!
+                    break;
+                case QMessageBox::Cancel:
+                    // The user didn't want to continue the installation, so stop the procedure.
+                    ui->progressBar->setEnabled(false);
+                    ui->progressBar->setValue(0);
+                    return;
+                    break;
+            }
+        }
+
+#endif
         }
     }
+    else
+    {
+        // The "default" code run when there are already binaries in the plugin.
 
-    CopyPluginFiles(PluginBasePath, SelectedUnrealInstallation.GetPath() + "/Engine/Plugins/uPIT");
-    PluginInstallComplete();
+        // Set the progress bar to 75% as we skipped the build, but then copy the files & show the finished installing plugin popup.
+        ui->progressBar->setValue(75);
+        CopyPluginFiles(PluginBasePath, SelectedUnrealInstallation.GetPath() + "/Engine/Plugins/uPIT");
+        PluginInstallComplete();
+    }
 }
 
 void MainWindow::on_RemovePluginButton_clicked()
