@@ -485,7 +485,7 @@ void MainWindow::on_InstallPluginButton_clicked()
                     RunUATFlags << "-Plugin=" + selectedPlugin.GetPath();
 
                     // Get or create a path where to package the plugin
-                    QDir PackageLocation = QStandardPaths::standardLocations(QStandardPaths::DataLocation)[0] + "/BuiltApps/" + selectedPlugin.GetName() + "-" + SelectedUnrealInstallation.GetName();
+                    QDir PackageLocation = QStandardPaths::standardLocations(QStandardPaths::DataLocation)[0] + "/BuiltPlugins/" + selectedPlugin.GetName() + "-" + SelectedUnrealInstallation.GetName();
 
                     if (!PackageLocation.exists())
                     {
@@ -513,15 +513,7 @@ void MainWindow::on_InstallPluginButton_clicked()
                         qDebug() << "Successfully Built Plugin Binaries.";
 #endif
                         // Since we successfully built the plugin, set the plugin's path to this new location:
-                        /// It should be safe to assume the host project only has one project plugin
-                        QDirIterator PackageLocationIt(PackageLocation.path() + "/HostProject/Plugins",  QStringList() << "*.uplugin", QDir::Files, QDirIterator::Subdirectories);
-                        // TODO Does the plugin remain in HostProject? I believe it doesn't, but can't check as of writing this line.
-
-                        while (PackageLocationIt.hasNext())
-                        {
-                            QString PluginPath = PackageLocationIt.next();
-                            PluginBasePath = QFileInfo(PluginPath).absoluteDir().absolutePath();
-                        }
+                        PluginBasePath = PackageLocation.path();
                     }
                     else
                     {
