@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QListWidget>
+#include <QProcess>
 #include "unrealplugin.h"
 #include "unrealinstall.h"
 
@@ -39,10 +40,16 @@ private slots:
 
     void on_PluginList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
 
+    void on_PluginBuild_complete(int exitCode, QProcess::ExitStatus exitStatus);
+
 private:
     QList<UnrealInstall> GetEngineInstalls();
 
     void RefreshPlugins(UnrealInstall UnrealInstallation);
+
+    void CopyPluginFiles(QString SourcePath, QString DestinationPath);
+
+    void PluginInstallComplete();
 
 private:
     Ui::MainWindow *ui;
@@ -53,6 +60,8 @@ private:
     QList<UnrealInstall> UnrealInstallations;
 
     QList<UnrealPlugin> InstalledPlugins;
+
+    QMap<QString, QString> PluginInstallState;
 };
 
 #endif // MAINWINDOW_H

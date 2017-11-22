@@ -313,6 +313,82 @@ void MainWindow::RefreshPlugins(UnrealInstall UnrealInstallation)
     }
 }
 
+void MainWindow::CopyPluginFiles(QString SourcePath, QString DestinationPath)
+{
+    // Copy over all of the plugin's files to the engine's plugins directory (use the uPIT subdirectory to keep a tab on them)
+    QFileInfoList Files = QDir(SourcePath).entryInfoList(QDir::AllEntries | QDir::AllDirs | QDir::NoDotAndDotDot | QDir::Hidden);
+
+#ifdef QT_DEBUG
+        qDebug() << "Copying Plugin Files...";
+#endif
+
+    QString DestinationDirectory = DestinationPath;
+
+    // Create the uPIT directory if it doesn't yet exist.
+    if (!QDir(DestinationDirectory).exists())
+    {
+        QDir().mkdir(DestinationDirectory);
+    }
+
+    // Create the plugin directory if it doesn't yet exist.
+    if (!QDir(DestinationDirectory + "/" + QDir(SourcePath).dirName()).exists())
+    {
+        QDir().mkdir(DestinationDirectory + "/" + QDir(SourcePath).dirName());
+    }
+
+    // TODO Make a progress bar? (that could also be used with like 0% then 50% then 100% when building binaries as it only has a few things we can track)
+
+    QDirIterator it(SourcePath, QStringList() << "*.*", QDir::Files, QDirIterator::Subdirectories);
+    while (it.hasNext())
+    {
+        // Get The Next File We Need To Copy
+        QString FilePath = it.next();
+
+        // Fetch/Create The Source And Destination Paths
+        QString Source = FilePath;
+        QString Destination = DestinationDirectory + "/" + QDir(SourcePath).dirName() + FilePath.remove(SourcePath);
+
+        // Create the directory if it doesn't yet exist.
+        if (!QDir(QFileInfo(Destination).absoluteDir().absolutePath()).exists())
+        {
+            QDir().mkdir(QFileInfo(Destination).absoluteDir().absolutePath());
+        }
+
+        QFile(Source).copy(Destination);
+
+#ifdef QT_DEBUG
+        qDebug() << Source << " -> " << Destination;
+#endif
+    }
+
+#ifdef QT_DEBUG
+        qDebug() << "Finished Copying Files.";
+#endif
+}
+
+void MainWindow::PluginInstallComplete()
+{
+    // Successfully installed the plugin - the bar should be filled as we're done.
+    ui->progressBar->setValue(100);
+
+    // Tell the user we're done, and be sure to update the plugin so it's added to the engine & set to installed (so the user can only press the remove button on the plugin).
+    RefreshPlugins(SelectedUnrealInstallation);
+
+    // Mark this plugin as installed, and then reset it so the installed button will be greyed out & the uninstall will be active.
+    selectedPlugin.SetInstalled(true);
+    SetPlugin(selectedPlugin);
+
+    // Show the user a popup telling them the plugin successfully installed.
+    QMessageBox FinishedPrompt;
+    FinishedPrompt.setWindowTitle("Done!");
+    FinishedPrompt.setText("We Successfully Installed " + selectedPlugin.GetName() + " to " + SelectedUnrealInstallation.GetName() + "!");
+    FinishedPrompt.exec();
+
+    // When this get's executed the prompt was (accepted) and the bar can be "reset"
+    ui->progressBar->setEnabled(false);
+    ui->progressBar->setValue(0);
+}
+
 void MainWindow::on_EngineVersionSelector_currentIndexChanged(int index)
 {
     // Use the list's index we got when we where adding these to get the right engine version
@@ -411,6 +487,10 @@ void MainWindow::on_InstallPluginButton_clicked()
         return;
     }
 
+    // Enable/set the progress bar to 25%
+    ui->progressBar->setEnabled(true);
+    ui->progressBar->setValue(25);
+
     // Check whether or not there is a Binaries/<Platform> file
     QString PluginBasePath = QFileInfo(selectedPlugin.GetPath()).absoluteDir().absolutePath();
 
@@ -499,114 +579,28 @@ void MainWindow::on_InstallPluginButton_clicked()
 #ifdef QT_DEBUG
                     qDebug() << "Going to run " << RunUATPath << " with the flags: " << RunUATFlags << " to build this plugin...";
 #endif
+                    PluginInstallState["PluginBasePath"] = PluginBasePath;
+                    PluginInstallState["PackageLocation"] = PackageLocation.path();
+                    PluginInstallState["EnginePath"] = SelectedUnrealInstallation.GetPath();
+                    // Run the UAT and wait until it's finished
+                    QProcess *p = new QProcess(this);
 
-                    // Run the UAT and wait until it's finished - TODO show the user some feedback so they don't think the app is hanging
-                    QProcess p;
-                    p.start(RunUATPath, RunUATFlags);
+                    connect(p, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),this, &MainWindow::on_PluginBuild_complete);
+                    p->start(RunUATPath, RunUATFlags);
 
-                    // Give it no timeout because plugins can be pretty large, and builds, depending on the system, can take (freaking) forever!
-                    p.waitForFinished(-1);
 
-                    if (p.exitStatus() == QProcess::NormalExit && p.exitCode() == 0)
-                    {
-#ifdef QT_DEBUG
-                        qDebug() << "Successfully Built Plugin Binaries.";
-#endif
-                        // Since we successfully built the plugin, set the plugin's path to this new location:
-                        PluginBasePath = PackageLocation.path();
-                    }
-                    else
-                    {
-#ifdef QT_DEBUG
-                        qDebug() << "Finished Building Plugin Binaries, But Failed. Output Log:";
-                        qDebug() <<  QString(p.readAll());
-#endif
 
-                        // If not, ask the user whether or not they want to rebuild it
-                        QMessageBox BuildFailedPrompt;
-                        BuildFailedPrompt.setWindowTitle("Failed To Build Plugin Binaries");
-                        BuildFailedPrompt.setText("There Was An Issue Building Your Plugin's Binaries. Would You Still Like To Continue On With The Installation?");
-                        BuildFailedPrompt.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+                    // Set the progress bar to 50% to tell the user the build is in progress
+                    ui->progressBar->setValue(50);
 
-                        int UserResponse = BuildFailedPrompt.exec();
-
-                        // Which button did the user press?
-                        switch (UserResponse)
-                        {
-                            case QMessageBox::Ok:
-                                break;
-                            case QMessageBox::Cancel:
-                                return;
-                                break;
-                        }
-                    }
-
+                    // Return so the async callback can do it's thing and we don't copy the files twice.
+                    return;
                 }
         }
     }
 
-    // Copy over all of the plugin's files to the engine's plugins directory (use the uPIT subdirectory to keep a tab on them)
-    QFileInfoList Files = QDir(PluginBasePath).entryInfoList(QDir::AllEntries | QDir::AllDirs | QDir::NoDotAndDotDot | QDir::Hidden);
-
-#ifdef QT_DEBUG
-        qDebug() << "Copying Plugin Files...";
-#endif
-
-    QString DestinationDirectory = SelectedUnrealInstallation.GetPath() + "/Engine/Plugins/uPIT";
-
-    // Create the uPIT directory if it doesn't yet exist.
-    if (!QDir(DestinationDirectory).exists())
-    {
-        QDir().mkdir(DestinationDirectory);
-    }
-
-    // Create the plugin directory if it doesn't yet exist.
-    if (!QDir(DestinationDirectory + "/" + QDir(PluginBasePath).dirName()).exists())
-    {
-        QDir().mkdir(DestinationDirectory + "/" + QDir(PluginBasePath).dirName());
-    }
-
-    // TODO Make a progress bar? (that could also be used with like 0% then 50% then 100% when building binaries as it only has a few things we can track)
-
-    QDirIterator it(PluginBasePath, QStringList() << "*.*", QDir::Files, QDirIterator::Subdirectories);
-    while (it.hasNext())
-    {
-        // Get The Next File We Need To Copy
-        QString FilePath = it.next();
-
-        // Fetch/Create The Source And Destination Paths
-        QString Source = FilePath;
-        QString Destination = DestinationDirectory + "/" + QDir(PluginBasePath).dirName() + FilePath.remove(PluginBasePath);
-
-        // Create the directory if it doesn't yet exist.
-        if (!QDir(QFileInfo(Destination).absoluteDir().absolutePath()).exists())
-        {
-            QDir().mkdir(QFileInfo(Destination).absoluteDir().absolutePath());
-        }
-
-        QFile(Source).copy(Destination);
-
-#ifdef QT_DEBUG
-        qDebug() << Source << " -> " << Destination;
-#endif
-    }
-
-#ifdef QT_DEBUG
-        qDebug() << "Finished Copying Files.";
-#endif
-
-    // Tell the user we're done, and be sure to update the plugin so it's added to the engine & set to installed (so the user can only press the remove button on the plugin).
-    RefreshPlugins(SelectedUnrealInstallation);
-
-    // Mark this plugin as installed, and then reset it so the installed button will be greyed out & the uninstall will be active.
-    selectedPlugin.SetInstalled(true);
-    SetPlugin(selectedPlugin);
-
-    // Show the user a popup telling them the plugin successfully installed.
-    QMessageBox FinishedPrompt;
-    FinishedPrompt.setWindowTitle("Done!");
-    FinishedPrompt.setText("We Successfully Installed " + selectedPlugin.GetName() + " to " + SelectedUnrealInstallation.GetName() + "!");
-    FinishedPrompt.exec();
+    CopyPluginFiles(PluginBasePath, SelectedUnrealInstallation.GetPath() + "/Engine/Plugins/uPIT");
+    PluginInstallComplete();
 }
 
 void MainWindow::on_RemovePluginButton_clicked()
@@ -750,4 +744,49 @@ void MainWindow::on_PluginList_currentItemChanged(QListWidgetItem *current, QLis
 #ifdef QT_DEBUG
    qDebug() << "Selected Plugin: " << PluginItem->GetPlugin().GetName();
 #endif
+}
+
+void MainWindow::on_PluginBuild_complete(int exitCode, QProcess::ExitStatus exitStatus)
+{
+    if (exitStatus == QProcess::NormalExit && exitCode == 0)
+    {
+#ifdef QT_DEBUG
+        qDebug() << "Successfully Built Plugin Binaries.";
+#endif
+        // Since we successfully built the plugin, set the plugin's path to this new location:
+        PluginInstallState["PluginBasePath"] = PluginInstallState["PackageLocation"];
+    }
+    else
+    {
+#ifdef QT_DEBUG
+        qDebug() << "Finished Building Plugin Binaries, But Failed. Output Log:";
+        //qDebug() <<  QString(p.readAll()); TODO find a way to still report this
+#endif
+
+        // If not, ask the user whether or not they want to rebuild it
+        QMessageBox BuildFailedPrompt;
+        BuildFailedPrompt.setWindowTitle("Failed To Build Plugin Binaries");
+        BuildFailedPrompt.setText("There Was An Issue Building Your Plugin's Binaries. Would You Still Like To Continue On With The Installation?");
+        BuildFailedPrompt.setStandardButtons(QMessageBox::Ok | QMessageBox::Cancel);
+
+        int UserResponse = BuildFailedPrompt.exec();
+
+        // Which button did the user press?
+        switch (UserResponse)
+        {
+            case QMessageBox::Ok:
+                break;
+            case QMessageBox::Cancel:
+                // Reset the progress bar & return so the rest doesn't get executed
+                ui->progressBar->setEnabled(false);
+                ui->progressBar->setValue(0);
+                return;
+                break;
+        }
+    }
+
+    ui->progressBar->setValue(75);
+    CopyPluginFiles(PluginInstallState["PluginBasePath"], PluginInstallState["EnginePath"] + "/Engine/Plugins/uPIT");
+
+    PluginInstallComplete();
 }

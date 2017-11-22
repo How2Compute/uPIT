@@ -30,7 +30,7 @@
       <x>180</x>
       <y>40</y>
       <width>201</width>
-      <height>191</height>
+      <height>171</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="PluginDetails">
@@ -94,6 +94,25 @@ p, li { white-space: pre-wrap; }
       <width>151</width>
       <height>192</height>
      </rect>
+    </property>
+   </widget>
+   <widget class="QProgressBar" name="progressBar">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>180</x>
+      <y>220</y>
+      <width>201</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="value">
+     <number>0</number>
+    </property>
+    <property name="textVisible">
+     <bool>true</bool>
     </property>
    </widget>
   </widget>
