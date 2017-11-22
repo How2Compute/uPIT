@@ -24,22 +24,22 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 
 SOURCES += \
-        main.cpp \
-        mainwindow.cpp \
-    unrealplugin.cpp \
-    unrealinstall.cpp \
-    pluginsource.cpp \
-    pluginlistitem.cpp
+        Source/main.cpp \
+        Source/Widgets/mainwindow.cpp \
+    Source/DataTypes/unrealplugin.cpp \
+    Source/DataTypes/unrealinstall.cpp \
+    Source/DataTypes/pluginsource.cpp \
+    Source/Widgets/pluginlistitem.cpp
 
 HEADERS += \
-        mainwindow.h \
-    unrealplugin.h \
-    unrealinstall.h \
-    pluginsource.h \
-    pluginlistitem.h
+        Source/Widgets/mainwindow.h \
+    Source/DataTypes/unrealplugin.h \
+    Source/DataTypes/unrealinstall.h \
+    Source/DataTypes/pluginsource.h \
+    Source/Widgets/pluginlistitem.h
 
 FORMS += \
-        mainwindow.ui
+        Source/Widgets/mainwindow.ui
 
 # Allows us to use nullptr/other c++11 stuff
 QMAKE_CXXFLAGS += -std=c++0x
